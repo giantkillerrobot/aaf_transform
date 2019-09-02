@@ -1,0 +1,1183 @@
+'TIP: You can encrypt this file when it is saved, or password protect it, by adding a special comment to the first line of the file (with no leading spaces).
+'To encrypt the file, set the comment on the first line to: 'ENCRYPTED
+'To password protect the file (which will also encrypt it), set the comment on the first line to: 'PASSWORD:your_password_phrase
+
+define class aaf::transformClass
+
+'You can specify your own namespace for your classes.
+'The namespaces can be any name you want. 
+'Namespaces are useful to group similar classes together.
+'To dim an object of this class use this syntax: dim pMyinstance as mynamespace::mySampleClass
+
+	DIM _apikey as C
+	
+	DIM _formID as C = ""
+	DIM _formname as C = ""
+	DIM _formversion as C = ""
+	DIM _color as C = ""
+	DIM _textcolor as C = ""
+	DIM _icon as C = ""
+	DIM _initialization as C = ""
+	DIM _previewdata as C = ""
+	DIM _headingtemplate as C = ""
+	DIM _listingtemplate as C = ""
+	DIM _printingtemplate as C = ""
+	DIM _settings as C = ""
+	DIM _formDataJSON as C = "{}"
+		
+	DIM PRIVATE _cmdsPointerArray[0] as P
+	DIM PRIVATE _cmdsPointer as P
+	DIM PRIVATE _formPointer as P
+	
+	function formDefinitionGetDropDown as c ()
+		
+		DIM definitionPointer as P
+		DIM output as C = ""
+				
+		'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		'--dim apikey as c = "70c1f472d3b842839d205a920e3cec1a_ALL"
+		dim postdata as c 
+		dim url as c = "/GetListOfFormDefinitionsForAccount"
+		dim pr as p
+
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .f. then
+			dim result as c 
+			result = pr.result
+
+			definitionPointer = json_parse(result)
+			
+			for each item in definitionPointer.result
+				output = output + item.formname + "|" + item.formid + crlf()
+			next
+			
+			formDefinitionGetDropDown = output
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+		end if 
+
+
+	end function 
+	
+		function formInstanceListBuilder as c (formFields = "")
+		
+		DIM instancePointer as P
+		DIM output as C
+		DIM outputPointerArray[0] as P
+		
+		DIM loadFieldExpression as C = <<%str%
+outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
+%str%
+	
+				
+		'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"
+		dim postdata as c 
+		dim url as c = "/GetFormInstancesArrayForFormId/" + self._formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false&returnMediaFileList=false&getFormDefinition=false"
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+		if pr.error = .f. then
+			dim result as c 
+			result = pr.result
+
+			instancePointer = json_parse(result)
+
+			for each item in instancePointer.result
+				index = outputPointerArray.append()
+				outputPointerArray[index].forminstanceid = item.forminstanceid
+				for each fieldItem in comma_to_crlf(formFields)
+					executeExpression = stritran(loadFieldExpression,"{{columnName}}",fieldItem.value)
+					evaluate_template(executeExpression)
+				next
+				
+			next
+			
+
+		formInstanceListBuilder = json_generate(outputPointerArray)	
+						
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+		end if 
+
+
+	end function 
+
+	
+	FUNCTION formDefinitionDelete as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_formDefinitionDelete
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+
+
+
+
+		dim postdata as c 
+		dim url as c = "/DeleteFormDefinition/" + self._formID
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+	
+		ret.result = "Success"
+		
+		formDefinitionDelete = ret
+	
+	end
+	
+	error_handler_formDefinitionDelete:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		formDefinitionDelete = ret   
+	
+		
+	END FUNCTION
+	
+
+
+	FUNCTION formDefinitionAndInstancesDelete as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_formDefinitionAndInstancesDelete
+	
+
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+		
+		DIM callResult as P
+		DIM callResult.error as L
+		DIM callResult.errorText as C
+		DIM callResult.result as C   
+
+		DIM formInstancePointerArray[0] as P
+		DIM formInstancePointer as P
+		
+		'-- First, get a list of instances
+		callResult = self.getFormInstances()
+		if callResult.error then
+			error_generate("Error getting form instances")
+		end if
+
+		formInstancePointerArray = callResult.result
+		
+		for each formInstancePointer in callResult.result
+
+				dim postdata as c 
+				dim url as c = "/DeleteFormInstance/" + formInstancePointer.forminstanceid
+				dim pr as p
+				pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+				if pr.error = .t. then
+					error_generate("Form instance delete error." + pr.errorText) 
+				end if 
+		next
+		
+
+		dim postdata as c 
+		dim url as c = "/DeleteFormDefinition/" + self._formID
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+	
+		ret.result = "Success"
+		
+		formDefinitionAndInstancesDelete = ret
+	
+	end
+	
+	error_handler_formDefinitionAndInstancesDelete:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		formDefinitionAndInstancesDelete = ret   
+	
+		
+	END FUNCTION
+	
+	FUNCTION addCmdsHeading as P(headingText as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsHeading
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		DIM index as N
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "heading"
+		self._cmdsPointerArray[index].type = "group"
+		self._cmdsPointerArray[index].text = headingText '---"FLPOC11" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsHeading = ret
+	
+	end
+	
+	error_handler_addCmdsHeading:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsHeading = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsPageStart as P(text as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsPageStart
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		DIM index as N
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "pageStart"
+		self._cmdsPointerArray[index].text = text '---"FLPOC11" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsPageStart = ret
+	
+	end
+	
+	error_handler_addCmdsPageStart:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsPageStart = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsPageEnd as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsPageEnd
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		DIM index as N
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "pageEnd"
+		
+		ret.result = "Success"
+		
+		addCmdsPageEnd = ret
+	
+	end
+	
+	error_handler_addCmdsPageEnd:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsPageEnd = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsInstructions as P(text as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsInstructions
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		DIM index as N
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "heading"
+		self._cmdsPointerArray[index].text = text		
+		self._cmdsPointerArray[index].type = "instructions"
+
+		ret.result = "Success"
+		
+		addCmdsInstructions = ret
+	
+	end
+	
+	error_handler_addCmdsInstructions:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsInstructions = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsChangeStatus as P(target as C, text as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsChangeStatus
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		DIM index as N
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "changeStatus"
+		self._cmdsPointerArray[index].text = text		
+		self._cmdsPointerArray[index].target = target
+
+		ret.result = "Success"
+		
+		addCmdsChangeStatus = ret
+	
+	end
+	
+	error_handler_addCmdsChangeStatus:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsChangeStatus = ret   
+	
+		
+	END FUNCTION
+	
+	
+	FUNCTION addCmdsNumber as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsNumber
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+   
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "number" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsNumber = ret
+	
+	end
+	
+	error_handler_addCmdsNumber:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsNumber = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsDate as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsDate
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+   
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "date" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsDate = ret
+	
+	end
+	
+	error_handler_addCmdsDate:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsDate = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsDateTime as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsDateTime
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+   
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "datetime" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsDateTime = ret
+	
+	end
+	
+	error_handler_addCmdsDateTime:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsDateTime = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsText as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsText
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+   
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "text" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsText = ret
+	
+	end
+	
+	error_handler_addCmdsText:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsText = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsYesNo as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsYesNo
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+ 
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+
+		
+		self._cmdsPointerArray[index].type = "buttonlist" 
+		
+		'-- Now add the list with Yes/No
+
+		DIM self._cmdsPointerArray[index].list[0] as P
+		listIndex = self._cmdsPointerArray[index].list.append()
+		self._cmdsPointerArray[index].list[listIndex].text = "Yes"
+		self._cmdsPointerArray[index].list[listIndex].value = "Yes"
+		listIndex = self._cmdsPointerArray[index].list.append()
+		self._cmdsPointerArray[index].list[listIndex].text = "No"
+		self._cmdsPointerArray[index].list[listIndex].value = "No"
+		
+		ret.result = "Success"
+		
+		addCmdsYesNo = ret
+	
+	end
+	
+	error_handler_addCmdsYesNo:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsYesNo = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsList as P(groupPath as C, text as C, previewValue as C, required as L, listContent as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsList
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+
+		
+		self._cmdsPointerArray[index].type = "list" 
+		
+		'-- Now iterate through the comma delimited list
+		
+		listContentList = comma_to_crlf(listContent)
+
+		DIM self._cmdsPointerArray[index].list[0] as P
+				
+		for each item in listContentList
+			listIndex = self._cmdsPointerArray[index].list.append()
+			self._cmdsPointerArray[index].list[listIndex].text = item.value
+			self._cmdsPointerArray[index].list[listIndex].value = item.value			
+		next
+		
+		
+		ret.result = "Success"
+		
+		addCmdsList = ret
+	
+	end
+	
+	error_handler_addCmdsList:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsList = ret   
+	
+		
+	END FUNCTION
+				
+	FUNCTION addCmdsInteger as P(groupPath as C, text as C, previewValue as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsInteger
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "integer" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsInteger = ret
+	
+	end
+	
+	error_handler_addCmdsInteger:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsInteger = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION addCmdsPhoto as P(groupPath as C, text as C, required as L)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_addCmdsPhoto
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		'-- Insert your code here.
+		index = self._cmdsPointerArray.append()
+		self._cmdsPointerArray[index].cmd = "field"
+		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
+		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
+		'--self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
+		if required then
+			self._cmdsPointerArray[index].required = "Y" 
+		else
+			self._cmdsPointerArray[index].required = "N" 		
+		end if
+		
+		self._cmdsPointerArray[index].type = "photo" 
+
+		
+		ret.result = "Success"
+		
+		addCmdsPhoto = ret
+	
+	end
+	
+	error_handler_addCmdsPhoto:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		addCmdsPhoto = ret   
+	
+		
+	END FUNCTION
+		
+	FUNCTION returnCMDSJson as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_returnCMDSJson
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+	
+		ret.result = json_generate(self._cmdsPointerArray,.t.)
+		
+		returnCMDSJson = ret
+	
+	end
+	
+	error_handler_returnCMDSJson:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		returnCMDSJson = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION generateFormJSON as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_generateFormJSON
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C  
+		
+		 
+		
+		DIM formPointer as P
+		
+		formPointer.formid = self._formid
+		formPointer.formname = self._formname
+		formPointer.formversion = self._formversion
+		formPointer.color = self._color
+		formPointer.textcolor = self._textcolor
+		formPointer.icon = self._icon
+		formPointer.initialization = self._initialization
+		formPointer.previewdata = self._previewdata
+		formPointer.headingtemplate = self._headingtemplate
+		formPointer.listingtemplate = self._listingtemplate
+		formPointer.printingtemplate = self._printingtemplate
+		formPointer.settings = self._settings
+		formPointer.cmds = json_generate(self._cmdsPointerArray,.t.)
+
+
+		outputJSON = json_generate(formPointer)
+		
+		'--outputJSON = strtran(outputJSON,"\n","")
+		'--outputJSON = strtran(outputJSON,"\t","")
+
+		DIM formDefinitionPointer as P
+		formDefinitionPointer.formId = self._formid '--"FLPOC11"
+		formDefinitionPointer.formname = self._formname '-- "FLPOC11"
+		formDefinitionPointer.formDefinitionJSON = outputJSON
+
+		postdata = json_generate(formDefinitionPointer)
+		'--postdata = strtran(postdata,"\n","")
+		'--postdata = strtran(postdata,"\t","")
+		
+		ret.result = postdata
+		
+		generateFormJSON = ret
+	
+	end
+	
+	error_handler_generateFormJSON:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		generateFormJSON = ret   
+	
+		
+	END FUNCTION
+
+	
+	FUNCTION insertFormDefinition as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_insertFormDefinition
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+		
+		DIM callResult as P
+		DIM callResult.error as L
+		DIM callResult.errorText as C
+		DIM callResult.result as C   
+		
+		callResult = self.generateFormJSON()
+	
+		if callResult.Error then
+				error_generate(callResult.errorText)
+			else
+				'-- Insert your code here.
+				dim url as c = "/CreateNewFormDefinition"
+				dim pr as p
+				pr = a5dialogHelper_transformAPIQuery(url,callResult.result,self._apikey)
+				if pr.error = .f. then
+					dim result as c 
+					result = pr.result
+					'--showvar(result)
+				else
+					dim errorText as c 
+					error_generate(pr.errorText)
+				end if 			
+			
+		end if
+
+		
+		ret.result = "Success"
+		
+		insertFormDefinition = ret
+	
+	end
+	
+	error_handler_insertFormDefinition:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		insertFormDefinition = ret   
+	
+		
+	END FUNCTION	
+
+	FUNCTION createFormInstance as P(username as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_createFormInstance
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+
+		dim formInstancePointer as P
+		formInstancePointer.formId = self._formId '--"FLPOC11"
+		formInstancePointer.formDataJSON = self._formDataJSON '--"{}"
+		formInstancePointer.person = username '--"dion@alphasoftware.com"
+		
+		postdata = json_generate(formInstancePointer)
+		
+		dim url as c = "/CreateNewFormInstance"
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .f. then
+			
+			dim result as c 
+			'--showvar(result)
+			'-- Now grab the form instance id
+			DIM formInsertResult as P
+			formInsertResult = json_parse(pr.result)
+
+			'-- Return the new unique id for the form instance.
+			ret.result = formInsertResult.result.forminstanceid
+			
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+			error_generate(errorText) '--showvar(errorText)
+		end if 
+		
+		createFormInstance = ret
+	
+	end
+	
+	error_handler_createFormInstance:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		createFormInstance = ret   
+	
+		
+	END FUNCTION
+			
+	function getFormInstances as P()
+				
+	on error goto error_handler_getFormInstances
+
+	DIM ret as P
+	DIM ret.error as L = .F.
+	DIM ret.errorText as C = ""
+	DIM ret.result as P
+	
+	DIM transformResult as P 
+		
+	dim apikey as c = self._apikey '-- "9b70726126f345959ec2ff37d83ef9fb_ALL"
+	dim postdata as c 
+	dim url as c = "/GetFormInstancesArrayForFormId/" + self._formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false"
+	dim pr as p
+	pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+	if pr.error = .f. then
+		dim result as c 
+		result = pr.result
+	else
+		dim errorText as c 
+		errorText = pr.errorText
+	end if 
+	
+
+	transformResult = json_parse(result) 
+	ret.result = transformResult.result
+	getFormInstances = ret
+
+
+	end
+	
+	error_handler_getFormInstances:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	 	script = error_script_get()
+	 	lineNumber = error_line_number_get()
+	 	 
+	 	ret.error = .T.
+	 	
+	   ret.errorText = "alert('" + js_escape("Error: " + script + ":" + lineNumber + ": " + msg) + "');"
+	    '--showvar("Error: " + script + ":" + lineNumber + ": " + msg)
+	    
+	    getFormInstances = ret
+	end function
+
+	FUNCTION getFormInstanceData as P(formInstanceID as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_getFormInstanceData
+	
+
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+		
+		DIM transformResult as P
+		
+		dim postdata as c 
+		dim url as c = "/GetFormDataForFormInstanceId/" + formInstanceID + "?mode=Detailed&resolveMediaFields=true&injectFormMetaDataIntoData=true"
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+	
+		
+		transformResult = json_parse(pr.result) 
+		ret.result = json_generate(transformResult.result[1].formdata)
+		
+		getFormInstanceData = ret
+	
+	end
+	
+	error_handler_getFormInstanceData:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		getFormInstanceData = ret   
+	
+		
+	END FUNCTION
+
+	FUNCTION getFormInstanceDataJSON as C(formInstanceID as C)
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_getFormInstanceDataJSON
+	
+
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+		
+		DIM transformResult as P
+	
+			'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"	
+			
+		dim postdata as c 
+		dim url as c = "/GetFormDataForFormInstanceId/" + formInstanceID + "?mode=Detailed&resolveMediaFields=false&injectFormMetaDataIntoData=false&returnMediaFileList=false&getFormDefinition=false"
+
+		'--dim url as c = "/GetFormDataForFormInstanceId/" + formInstanceID + "?mode=Detailed&resolveMediaFields=true&injectFormMetaDataIntoData=true"
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+		
+		debug(1)
+		
+		
+		transformResult = json_parse(pr.result) 
+		'ret.result = json_generate(transformResult.result[1].formdata)
+		
+		getFormInstanceDataJSON = json_generate(transformResult.result[1].formdata)
+	
+	end
+	
+	error_handler_getFormInstanceDataJSON:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		getFormInstanceDataJSON = ret   
+	
+		
+	END FUNCTION
+	
+	function formDefinitionGet as c ()
+			
+		'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"	
+		dim postdata as c 
+		dim url as c = "/GetFormDefinitionForFormId/" + self._formID
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+		if pr.error = .f. then
+			debug(1)
+			dim result as c 
+			result = pr.result
+			
+			DIM resultPointer as P
+			resultPointer = json_parse(result)
+			output = json_generate(resultpointer.result)
+			
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+		end if 
+	
+		
+	
+		formDefinitionGet = output
+						
+
+
+	end function 
+
+	
+end class       	
+
+
