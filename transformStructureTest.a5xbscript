@@ -1,0 +1,66 @@
+'--
+'-- New TransForm Builder
+'--
+
+function addPage as N(keyValue as C, color as C)
+	pageIndex = formDefinition.pages.append()
+	formDefinition.pages[pageIndex].keyValue = keyValue
+	formDefinition.pages[pageIndex].color = color
+	addPage = pageIndex
+end function
+
+function addControl as N(id as C, color as C, pageKeyValue = "root")
+	'--
+	'-- TODO: Switch to pageKey.  Use this to find the number of the array.  a.findI("celine","name") 
+	'--
+	
+
+	pageid = formDefinition.pages.findI(pageKeyValue,"keyValue")
+	
+
+	DIM formDefinition.pages[pageid].controls[0] as P
+	controlIndex = formDefinition.pages[pageid].controls.append()
+	formDefinition.pages[pageid].controls[controlIndex].id  = id
+	formDefinition.pages[pageid].controls[controlIndex].type = color
+	addControl = controlIndex
+end function
+
+DELETE formDefinition
+DIM global formDefinition as P
+
+formDefinition.id = 1
+formDefinition.color = "green"
+formDefinition.name = "test"
+DIM formDefinition.pages[0] as P
+
+'-- Create Default Page - Will auto generate in the future.
+pageIndex = addPage("root","null")
+
+
+'-- Add a page
+pageIndex = addPage("firstpage","yellow")
+'-- Add controls
+controlIndex = addControl("999","grey","firstpage")
+controlIndex = addControl("888","taupe","firstpage")
+controlIndex = addControl("777","orange","firstpage")
+
+
+pageIndex = addPage("secondpage","blue")
+
+controlIndex = addControl("999","greypink","secondpage")
+
+pageIndex = addPage("thirdpage","green")
+
+controlIndex = addControl("1000","greypink")
+controlIndex = addControl("1001","testcolor")
+
+
+
+
+
+showvar(formDefinition)
+
+
+
+
+

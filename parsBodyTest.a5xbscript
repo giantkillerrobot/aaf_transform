@@ -1,0 +1,36 @@
+DIM transformBody as C
+transformBody = <<%str%
+postBody=%7b%0d%0a%09%22accountid%22%3a%20%22Account236%22%2c%0d%0a%09%22completed%22%3a%20%22%22%2c%0d%0a%09%22created%22%3a%20%222019%2d04%2d14%2015%3a45%3a02%22%2c%0d%0a%09%22comments%22%3a%20%22%22%2c%0d%0a%09%22forminstanceid%22%3a%20%22juheegma%5f2p2fpecf%22%2c%0d%0a%09%22formid%22%3a%20%22allthingsscottish%22%2c%0d%0a%09%22person%22%3a%20%22dion%40alphasoftware%2ecom%22%2c%0d%0a%09%22status%22%3a%20%22open%22%2c%0d%0a%09%22%5fisNewRow%22%3a%20true%2c%0d%0a%09%22%5fisDeleted%22%3a%20false%2c%0d%0a%09%22formdata%22%3a%20%7b%0d%0a%09%09%22field1%22%3a%20%222019%2d04%2d14%2015%3a45%3a03%2e6%22%2c%0d%0a%09%09%22field2%22%3a%20%2225%22%0d%0a%09%7d%0d%0a%7d
+%str%
+debug(1)
+
+transformBody = URLDECODE(transformBody)
+
+'transformBody = strtran(transformBody,"%22",chr(34))
+'
+'transformBody = strtran(transformBody,"%7b","{")
+'transformBody = strtran(transformBody,"%0d",crlf())
+'
+'transformBody = strtran(transformBody,"%3a",":")
+'transformBody = strtran(transformBody,"%20"," ")
+'transformBody = strtran(transformBody,"%2c",",")
+'transformBody = strtran(transformBody,"%09","")
+'transformBody = strtran(transformBody,"%0a","")
+'transformBody = strtran(transformBody,"%2d","-")
+'transformBody = strtran(transformBody,"%5f","_")
+'transformBody = strtran(transformBody,"%2e",".")
+'transformBody = strtran(transformBody,"%7d","}")
+'transformBody = strtran(transformBody,"%40","@")
+
+transformBody = strtran(transformBody,"postBody=","")
+
+debug(1)
+DIM transformDataPointer as P
+transformDataPointer = json_parse(transformBody)
+property_from_json(transformDataPointer,transformBody)
+
+
+
+
+'--transformBody = *HTML_UNESCAPE((transformBody))
+showvar(transformBody)

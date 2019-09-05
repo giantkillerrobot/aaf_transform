@@ -1,0 +1,94 @@
+'TIP: You can encrypt this file when it is saved, or password protect it, by adding a special comment to the first line of the file (with no leading spaces).
+'To encrypt the file, set the comment on the first line to: 'ENCRYPTED
+'To password protect the file (which will also encrypt it), set the comment on the first line to: 'PASSWORD:your_password_phrase
+
+'IMPORTANT - WEB APPLICATIONS: If you are using this class definition in Xbasic code in a web application, after you publish a new version of the class definition,
+'you must call the loadclass() function at least once before you DIM an instance of the class. For example: loadClass("mynamespace::mySampleClass")
+
+define class aaf::transform2
+
+'You can specify your own namespace for your classes.
+'The namespaces can be any name you want. 
+'Namespaces are useful to group similar classes together.
+'To dim an object of this class use this syntax: dim pMyinstance as mynamespace::mySampleClass
+
+	DIM formDefinition as P
+	DIM formDefinition.pages[0] as P
+	
+
+	FUNCTION transform2()
+		Initialize()
+	END FUNCTION
+ 
+	FUNCTION protected Initialize as V()
+		'--test = self.formDefinition.pages.size()
+		'-- Create Default Page - Will auto generate in the future.
+		pageIndex = addPage("root","null")
+	END FUNCTION
+             
+	function addPage as N(keyValue as C, color as C)
+		pageIndex = self.formDefinition.pages.append()
+		self.formDefinition.pages[pageIndex].keyValue = keyValue
+		self.formDefinition.pages[pageIndex].color = color
+		addPage = pageIndex
+		
+		'-- Add the controls for the page
+		DIM self.formDefinition.pages[pageIndex].controls[0] as P
+		
+	end function
+
+	
+	function addControl as N(id as C, color as C, pageKeyValue = "root")
+		'--
+		'-- TODO: Switch to pageKey.  Use this to find the number of the array.  a.findI("celine","name") 
+		'--	
+				
+		pageid = formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		controlIndex = self.formDefinition.pages[pageid].controls.append()
+		self.formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self.formDefinition.pages[pageid].controls[controlIndex].type = color
+		addControl = controlIndex
+	end function
+
+	function processForm as P()
+		
+		DIM ret as P
+		DIM ret.error as L = .F.
+		DIM ret.errorText as C = ""
+		DIM ret.result as C
+		
+		'--
+		'-- TODO: Switch to pageKey.  Use this to find the number of the array.  a.findI("celine","name") 
+		'--	
+		
+		'-- Perform Process Checks
+		
+		'-- Create new pointer to hold definition
+		
+		'-- Generate Header Pointer
+		
+		'-- Process CMDS
+		
+		debug(1)
+		
+		for each page in self.formDefinition.pages
+			
+			for each control in page.controls
+				
+				
+			next
+			
+		next 
+		
+		'-- Now convert to JSON
+		
+				
+		
+		processForm = ret
+		
+	end function
+		
+end class       	
+
+

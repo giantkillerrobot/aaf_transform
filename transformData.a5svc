@@ -1,0 +1,20 @@
+{
+    "api": [
+        {
+            "implementation": "Xbasic",
+            "service": "transform::connector",
+            "methods": [
+                {
+                    "name": "transformData",
+                    "method": "GET",
+                    "path": "/transformData",
+                    "use_query": true,
+                    "auth": ""
+                }
+            ]
+        }
+    ],
+    "allow": false,
+    "flatten_arguments": true,
+    "debugger_header": false
+}

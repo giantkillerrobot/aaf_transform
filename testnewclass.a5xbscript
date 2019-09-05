@@ -1,0 +1,31 @@
+'--
+'-- New class test
+'--
+
+DELETE myTransForm
+DIM myTransForm as aaf::transform2
+
+controlIndex = myTransForm.addControl("2000","greygreen")
+controlIndex = myTransForm.addControl("2001","greengrey")
+
+'-- Add a page
+pageIndex = myTransForm.addPage("firstpage","yellow")
+'-- Add controls
+controlIndex = myTransForm.addControl("999","grey","firstpage")
+controlIndex = myTransForm.addControl("888","taupe","firstpage")
+controlIndex = myTransForm.addControl("777","orange","firstpage")
+
+DIM callResult as P
+DIM callResult.error as L
+DIM callResult.errorText as C
+DIM callResult.result as C   
+
+callResult = myTransForm.processForm()
+
+if callResult.error then
+		msgbox(callResult.errorText)
+	else
+		msgbox(callResult.result)
+end if
+
+

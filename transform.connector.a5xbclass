@@ -1,0 +1,33 @@
+'TIP: You can encrypt this file when it is saved, or password protect it, by adding a special comment to the first line of the file (with no leading spaces).
+'To encrypt the file, set the comment on the first line to: 'ENCRYPTED
+'To password protect the file (which will also encrypt it), set the comment on the first line to: 'PASSWORD:your_password_phrase
+
+'IMPORTANT - WEB APPLICATIONS: If you are using this class definition in Xbasic code in a web application, after you publish a new version of the class definition,
+'you must call the loadclass() function at least once before you DIM an instance of the class. For example: loadClass("mynamespace::mySampleClass")
+
+define class transform::connector
+
+'You can specify your own namespace for your classes.
+'The namespaces can be any name you want. For classes used to create REST APIs, the namespace is required
+'Namespaces are useful to group similar classes together.
+'To dim an object of this class use this syntax: dim pMyinstance as mynamespace::mySampleClass
+
+	dim sampleVar1 as c
+	dim __http_status as n 'dim variable for HTTP status code
+
+	function transformData as c()
+		
+		sampleMethod1 = "Success"
+		dim flagError  as l = .f.
+		'method must set the HTTP status code
+		if flagError = .f. then 
+		 	self.__http_status = 200
+		 else
+		 	 self.__http_status = 401
+		 end if 
+	end function
+	
+	
+end class       	
+
+

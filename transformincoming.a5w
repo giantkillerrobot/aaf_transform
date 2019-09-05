@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<meta name="generator" content="Alpha Anywhere HTML Editor Version 12 Build 5667-5254">
+<!-- must use in order to make XP Themes render -->
+<meta HTTP-EQUIV="MSThemeCompatible" content="Yes" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+
+<head>
+<title></title>
+</head>
+<body>
+
+<%a5 
+'--
+'-- Transform Example
+'--
+
+on error goto error_handler_transformIncoming
+
+	save_to_file(Context.Request.GetBodyAsText() + crlf(),"c:\debug\transformtest.txt",.t.)
+
+end
+
+error_handler_transformIncoming:
+
+    err = error_code_get()
+    msg = error_text_get(err)
+ 	script = error_script_get()
+ 	lineNumber = error_line_number_get()
+ 	 
+    save_to_file("Error: " + script + ":" + lineNumber + ": " + msg + crlf(),"c:\debug\transformtest.txt",.t. )
+
+%>
+</body></html>
