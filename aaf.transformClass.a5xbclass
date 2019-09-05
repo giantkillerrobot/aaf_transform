@@ -28,7 +28,70 @@ define class aaf::transformClass
 	DIM PRIVATE _cmdsPointerArray[0] as P
 	DIM PRIVATE _cmdsPointer as P
 	DIM PRIVATE _formPointer as P
+
+
+	function apikey.get as C ()
+        apikey.get = _apikey
+    end function 
+
+    function apikey.set as v (value as C )
+        _apikey = value
+    end function 
+    
+	function getFormInstances as P(formID as C)
+				
+	on error goto error_handler_getFormInstances
+
+	DIM ret as P
+	DIM ret.error as L = .F.
+	DIM ret.errorText as C = ""
+	DIM ret.result as P
 	
+	DIM transformResult as P 
+	
+	if self._apikey = "" then
+		error_generate("TransForm API Key Not Set")	
+	end if
+	
+	dim apikey as c = self._apikey
+	dim postdata as c 
+	dim url as c = "/GetFormInstancesArrayForFormId/" + formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false"
+	dim pr as p
+	pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+	if pr.error = .f. then
+		dim result as c 
+		result = pr.result
+	else
+		dim errorText as c 
+		errorText = pr.errorText
+	end if 
+	
+
+	transformResult = json_parse(result) 
+	ret.result = transformResult.result				
+
+
+	getFormInstances = ret
+
+
+	end
+	
+	error_handler_getFormInstances:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	 	script = error_script_get()
+	 	lineNumber = error_line_number_get()
+	 	 
+	 	ret.error = .T.
+	 	
+	   ret.errorText = "alert('" + js_escape("Error: " + script + ":" + lineNumber + ": " + msg) + "');"
+	    '--showvar("Error: " + script + ":" + lineNumber + ": " + msg)
+	    
+	    getFormInstancesJSON = ret
+	end function
+	
+		
 	function formDefinitionGetDropDown as c ()
 		
 		DIM definitionPointer as P
@@ -999,52 +1062,7 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 		
 	END FUNCTION
 			
-	function getFormInstances as P()
-				
-	on error goto error_handler_getFormInstances
 
-	DIM ret as P
-	DIM ret.error as L = .F.
-	DIM ret.errorText as C = ""
-	DIM ret.result as P
-	
-	DIM transformResult as P 
-		
-	dim apikey as c = self._apikey '-- "9b70726126f345959ec2ff37d83ef9fb_ALL"
-	dim postdata as c 
-	dim url as c = "/GetFormInstancesArrayForFormId/" + self._formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false"
-	dim pr as p
-	pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
-	if pr.error = .f. then
-		dim result as c 
-		result = pr.result
-	else
-		dim errorText as c 
-		errorText = pr.errorText
-	end if 
-	
-
-	transformResult = json_parse(result) 
-	ret.result = transformResult.result
-	getFormInstances = ret
-
-
-	end
-	
-	error_handler_getFormInstances:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	 	script = error_script_get()
-	 	lineNumber = error_line_number_get()
-	 	 
-	 	ret.error = .T.
-	 	
-	   ret.errorText = "alert('" + js_escape("Error: " + script + ":" + lineNumber + ": " + msg) + "');"
-	    '--showvar("Error: " + script + ":" + lineNumber + ": " + msg)
-	    
-	    getFormInstances = ret
-	end function
 
 	FUNCTION getFormInstanceData as P(formInstanceID as C)
 	
@@ -1147,8 +1165,6 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 			
 		'-- Get the api key
 		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
-		
-
 		
 		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"	
 		dim postdata as c 

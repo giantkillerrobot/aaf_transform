@@ -1,0 +1,15 @@
+DIM myTransForm as aaf::transformClass
+myTransForm.apikey = "70c1f472d3b842839d205a920e3cec1a_ALL"
+
+DIM callResult as P
+DIM callResult.error as L
+DIM callResult.errorText as C
+DIM callResult.result as C   
+
+callResult = myTransform.getFormInstances("oilform")
+
+if callResult.error then
+		showvar(callResult.errorText)
+	else
+		showvar(callResult.result)
+end if
