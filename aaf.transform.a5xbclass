@@ -58,7 +58,21 @@ define class aaf::transform
 		'-- Create Default Page - Will auto generate in the future.
 		pageIndex = addPage("root","null")
 	END FUNCTION
+ 
+	function apikey.get as C ()
+        apikey.get = _apikey
+    end function 
+
+    function apikey.set as v (value as C )
+        _apikey = value
+    end function 
+                
              
+'--
+'-- Page Management
+'-- The following code are the page structure functions.
+'--
+          
 	function addPage as N(keyValue as C, color as C)
 		pageIndex = self._formDefinition.pages.append()
 		self._formDefinition.pages[pageIndex].keyValue = keyValue
@@ -67,6 +81,7 @@ define class aaf::transform
 		
 		'-- Add the controls for the page
 		DIM self._formDefinition.pages[pageIndex].controls[0] as P
+		
 	end function
 
 
@@ -568,6 +583,9 @@ define class aaf::transform
 	
 	end function
 			
+'--
+'-- The following function processes the page structure and generates the TransForm JSON
+'--
 
 	function processForm as P()
 		
@@ -620,261 +638,8 @@ define class aaf::transform
 	'--
 	
 
-	function apikey.get as C ()
-        apikey.get = _apikey
-    end function 
-
-    function apikey.set as v (value as C )
-        _apikey = value
-    end function 
     
-	function getFormInstances as P(formID as C)
-				
-	on error goto error_handler_getFormInstances
 
-	DIM ret as P
-	DIM ret.error as L = .F.
-	DIM ret.errorText as C = ""
-	DIM ret.result as P
-	
-	DIM transformResult as P 
-	
-	if self._apikey = "" then
-		error_generate("TransForm API Key Not Set")	
-	end if
-	
-	dim apikey as c = self._apikey
-	dim postdata as c 
-	dim url as c = "/GetFormInstancesArrayForFormId/" + formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false"
-	dim pr as p
-	pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
-	if pr.error = .f. then
-		dim result as c 
-		result = pr.result
-	else
-		dim errorText as c 
-		errorText = pr.errorText
-	end if 
-	
-
-	transformResult = json_parse(result) 
-	ret.result = transformResult.result				
-
-
-	getFormInstances = ret
-
-
-	end
-	
-	error_handler_getFormInstances:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	 	script = error_script_get()
-	 	lineNumber = error_line_number_get()
-	 	 
-	 	ret.error = .T.
-	 	
-	   ret.errorText = "alert('" + js_escape("Error: " + script + ":" + lineNumber + ": " + msg) + "');"
-	    '--showvar("Error: " + script + ":" + lineNumber + ": " + msg)
-	    
-	    getFormInstancesJSON = ret
-	end function
-	
-		
-	function formDefinitionGetDropDown as c ()
-		
-		DIM definitionPointer as P
-		DIM output as C = ""
-				
-		'-- Get the api key
-		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
-		
-
-		
-		'--dim apikey as c = "70c1f472d3b842839d205a920e3cec1a_ALL"
-		dim postdata as c 
-		dim url as c = "/GetListOfFormDefinitionsForAccount"
-		dim pr as p
-
-		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
-		if pr.error = .f. then
-			dim result as c 
-			result = pr.result
-
-			definitionPointer = json_parse(result)
-			
-			for each item in definitionPointer.result
-				output = output + item.formname + "|" + item.formid + crlf()
-			next
-			
-			formDefinitionGetDropDown = output
-		else
-			dim errorText as c 
-			errorText = pr.errorText
-		end if 
-
-
-	end function 
-	
-		function formInstanceListBuilder as c (formFields = "")
-		
-		DIM instancePointer as P
-		DIM output as C
-		DIM outputPointerArray[0] as P
-		
-		DIM loadFieldExpression as C = <<%str%
-outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
-%str%
-	
-				
-		'-- Get the api key
-		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
-		
-
-		
-		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"
-		dim postdata as c 
-		dim url as c = "/GetFormInstancesArrayForFormId/" + self._formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false&returnMediaFileList=false&getFormDefinition=false"
-		dim pr as p
-		pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
-		if pr.error = .f. then
-			dim result as c 
-			result = pr.result
-
-			instancePointer = json_parse(result)
-
-			for each item in instancePointer.result
-				index = outputPointerArray.append()
-				outputPointerArray[index].forminstanceid = item.forminstanceid
-				for each fieldItem in comma_to_crlf(formFields)
-					executeExpression = stritran(loadFieldExpression,"{{columnName}}",fieldItem.value)
-					evaluate_template(executeExpression)
-				next
-				
-			next
-			
-
-		formInstanceListBuilder = json_generate(outputPointerArray)	
-						
-		else
-			dim errorText as c 
-			errorText = pr.errorText
-		end if 
-
-
-	end function 
-
-	
-	FUNCTION formDefinitionDelete as P()
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_formDefinitionDelete
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-
-
-
-
-		dim postdata as c 
-		dim url as c = "/DeleteFormDefinition/" + self._formID
-		dim pr as p
-		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
-		if pr.error = .t. then
-			error_generate(pr.errorText)
-		end if 
-	
-		ret.result = "Success"
-		
-		formDefinitionDelete = ret
-	
-	end
-	
-	error_handler_formDefinitionDelete:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		formDefinitionDelete = ret   
-	
-		
-	END FUNCTION
-	
-
-
-	FUNCTION formDefinitionAndInstancesDelete as P()
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_formDefinitionAndInstancesDelete
-	
-
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-		
-		DIM callResult as P
-		DIM callResult.error as L
-		DIM callResult.errorText as C
-		DIM callResult.result as C   
-
-		DIM formInstancePointerArray[0] as P
-		DIM formInstancePointer as P
-		
-		'-- First, get a list of instances
-		callResult = self.getFormInstances()
-		if callResult.error then
-			error_generate("Error getting form instances")
-		end if
-
-		formInstancePointerArray = callResult.result
-		
-		for each formInstancePointer in callResult.result
-
-				dim postdata as c 
-				dim url as c = "/DeleteFormInstance/" + formInstancePointer.forminstanceid
-				dim pr as p
-				pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
-				if pr.error = .t. then
-					error_generate("Form instance delete error." + pr.errorText) 
-				end if 
-		next
-		
-
-		dim postdata as c 
-		dim url as c = "/DeleteFormDefinition/" + self._formID
-		dim pr as p
-		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
-		if pr.error = .t. then
-			error_generate(pr.errorText)
-		end if 
-	
-		ret.result = "Success"
-		
-		formDefinitionAndInstancesDelete = ret
-	
-	end
-	
-	error_handler_formDefinitionAndInstancesDelete:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		formDefinitionAndInstancesDelete = ret   
-	
-		
-	END FUNCTION
 	
 	FUNCTION addCmdsHeading as P(headingText as C)
 	
@@ -1716,8 +1481,7 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
 		
 
-		
-		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"	
+		dim apikey as c = self._apikey
 			
 		dim postdata as c 
 		dim url as c = "/GetFormDataForFormInstanceId/" + formInstanceID + "?mode=Detailed&resolveMediaFields=false&injectFormMetaDataIntoData=false&returnMediaFileList=false&getFormDefinition=false"
@@ -1728,9 +1492,6 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 		if pr.error = .t. then
 			error_generate(pr.errorText)
 		end if 
-		
-		debug(1)
-		
 		
 		transformResult = json_parse(pr.result) 
 		'ret.result = json_generate(transformResult.result[1].formdata)
@@ -1783,7 +1544,376 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 
 	end function 
 
+
+	FUNCTION formDefinitionPreFlight as P()
 	
+	'--
+	'-- This function will perform the pre-flight check of the form definition before processing
+	'--
+	
+	on error goto error_handler_formDefinitionPreFlight
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C = ""   
+	
+		'-- Start pre-flight log 
+		ret.result = ret.result + "Pre-flight review starting..." + crlf()
+		
+		'-- 
+		'-- Check for required items
+		'--
+		if self._formid <> "" then
+				ret.result = ret.result + "formid ok" + crlf()			
+			else
+				ret.result = ret.result + "formid error" + crlf()	
+				ret.error = .T.
+		end if
+
+		if self._formname <> "" then
+				ret.result = ret.result + "formname ok" + crlf()			
+			else
+				ret.result = ret.result + "formname error" + crlf()	
+				ret.error = .T.
+		end if		
+		
+		if self._formversion <> "" then
+				ret.result = ret.result + "formversion ok" + crlf()			
+			else
+				ret.result = ret.result + "formversion error" + crlf()	
+				ret.error = .T.
+		end if		
+
+		if self._color <> "" then
+				ret.result = ret.result + "formversion ok" + crlf()			
+			else
+				ret.result = ret.result + "formversion warning" + crlf()	
+		end if		
+
+		if self._textcolor <> "" then
+				ret.result = ret.result + "textcolor ok" + crlf()			
+			else
+				ret.result = ret.result + "textcolor warning" + crlf()	
+		end if							
+
+		if self._icon <> "" then
+				ret.result = ret.result + "icon ok" + crlf()			
+			else
+				ret.result = ret.result + "icon warning" + crlf()	
+		end if	
+
+		if self._initialization <> "" then
+				ret.result = ret.result + "initialization ok" + crlf()			
+			else
+				ret.result = ret.result + "initialization warning" + crlf()	
+		end if	
+				
+		if self._previewdata <> "" then
+				ret.result = ret.result + "previewdata ok" + crlf()			
+			else
+				ret.result = ret.result + "previewdata warning"	+ crlf()
+		end if	
+
+		if self._headingtemplate <> "" then
+				ret.result = ret.result + "headingtemplate ok" + crlf()			
+			else
+				ret.result = ret.result + "headingtemplate warning" + crlf()	
+		end if	
+
+		if self._listingtemplate <> "" then
+				ret.result = ret.result + "listingtemplate ok" + crlf()			
+			else
+				ret.result = ret.result + "listingtemplate warning" + crlf()	
+		end if	
+
+		if self._printingtemplate <> "" then
+				ret.result = ret.result + "printingtemplate ok" + crlf()			
+			else
+				ret.result = ret.result + "printingtemplate warning" + crlf()	
+		end if	
+
+		if self._settings <> "" then
+				ret.result = ret.result + "settings ok"	+ crlf()		
+			else
+				ret.result = ret.result + "settings warning" + crlf()	
+		end if	
+						
+		ret.result = ret.result + "Pre-flight complete"	
+		
+		if ret.error then
+			error_generate("Pre-flight error.  Please check results")
+		end if
+		
+		
+		formDefinitionPreFlight = ret
+	
+	end
+	
+	error_handler_formDefinitionPreFlight:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		formDefinitionPreFlight = ret   
+	
+		
+	END FUNCTION
+
+'--
+'-- The following functions are utility functions for interacting with a TransForm account.
+'--
+
+	function getFormInstances as P(formID as C)
+				
+	on error goto error_handler_getFormInstances
+
+	DIM ret as P
+	DIM ret.error as L = .F.
+	DIM ret.errorText as C = ""
+	DIM ret.result as P
+	
+	DIM transformResult as P 
+	
+	if self._apikey = "" then
+		error_generate("TransForm API Key Not Set")	
+	end if
+	
+	dim apikey as c = self._apikey
+	dim postdata as c 
+	dim url as c = "/GetFormInstancesArrayForFormId/" + formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false"
+	dim pr as p
+	pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+	if pr.error = .f. then
+		dim result as c 
+		result = pr.result
+	else
+		dim errorText as c 
+		errorText = pr.errorText
+	end if 
+	
+
+	transformResult = json_parse(result) 
+	ret.result = transformResult.result				
+
+
+	getFormInstances = ret
+
+
+	end
+	
+	error_handler_getFormInstances:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	 	script = error_script_get()
+	 	lineNumber = error_line_number_get()
+	 	 
+	 	ret.error = .T.
+	 	
+	   ret.errorText = "alert('" + js_escape("Error: " + script + ":" + lineNumber + ": " + msg) + "');"
+	    '--showvar("Error: " + script + ":" + lineNumber + ": " + msg)
+	    
+	    getFormInstancesJSON = ret
+	end function
+	
+		
+	function formDefinitionGetDropDown as c ()
+		
+		DIM definitionPointer as P
+		DIM output as C = ""
+				
+		'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		'--dim apikey as c = "70c1f472d3b842839d205a920e3cec1a_ALL"
+		dim postdata as c 
+		dim url as c = "/GetListOfFormDefinitionsForAccount"
+		dim pr as p
+
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .f. then
+			dim result as c 
+			result = pr.result
+
+			definitionPointer = json_parse(result)
+			
+			for each item in definitionPointer.result
+				output = output + item.formname + "|" + item.formid + crlf()
+			next
+			
+			formDefinitionGetDropDown = output
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+		end if 
+
+
+	end function 
+	
+		function formInstanceListBuilder as c (formFields = "")
+		
+		DIM instancePointer as P
+		DIM output as C
+		DIM outputPointerArray[0] as P
+		
+		DIM loadFieldExpression as C = <<%str%
+outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
+%str%
+	
+				
+		'-- Get the api key
+		self._apikey = a5w_getfromwebapprepository("transformAPIKey")
+		
+
+		
+		dim apikey as c = self._apikey '--"70c1f472d3b842839d205a920e3cec1a_ALL"
+		dim postdata as c 
+		dim url as c = "/GetFormInstancesArrayForFormId/" + self._formID + "?paginated=false&pageSize=10&pageNumber=1&mode=Detailed&resolveMediaFields=true&getRecordCount=false&returnMediaFileList=false&getFormDefinition=false"
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,apikey)
+		if pr.error = .f. then
+			dim result as c 
+			result = pr.result
+
+			instancePointer = json_parse(result)
+
+			for each item in instancePointer.result
+				index = outputPointerArray.append()
+				outputPointerArray[index].forminstanceid = item.forminstanceid
+				for each fieldItem in comma_to_crlf(formFields)
+					executeExpression = stritran(loadFieldExpression,"{{columnName}}",fieldItem.value)
+					evaluate_template(executeExpression)
+				next
+				
+			next
+			
+
+		formInstanceListBuilder = json_generate(outputPointerArray)	
+						
+		else
+			dim errorText as c 
+			errorText = pr.errorText
+		end if 
+
+
+	end function 
+
+	
+	FUNCTION formDefinitionDelete as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_formDefinitionDelete
+	
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+
+
+
+
+		dim postdata as c 
+		dim url as c = "/DeleteFormDefinition/" + self._formID
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+	
+		ret.result = "Success"
+		
+		formDefinitionDelete = ret
+	
+	end
+	
+	error_handler_formDefinitionDelete:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		formDefinitionDelete = ret   
+	
+		
+	END FUNCTION
+	
+
+
+	FUNCTION formDefinitionAndInstancesDelete as P()
+	
+	'-- This is a placeholder for future functions.
+	'-- Makes it easy to copy/paste/update to add new functionality.
+	
+	on error goto error_handler_formDefinitionAndInstancesDelete
+	
+
+		DIM ret as P
+		DIM ret.error as L
+		DIM ret.errorText as C
+		DIM ret.result as C   
+		
+		DIM callResult as P
+		DIM callResult.error as L
+		DIM callResult.errorText as C
+		DIM callResult.result as C   
+
+		DIM formInstancePointerArray[0] as P
+		DIM formInstancePointer as P
+		
+		'-- First, get a list of instances
+		callResult = self.getFormInstances()
+		if callResult.error then
+			error_generate("Error getting form instances")
+		end if
+
+		formInstancePointerArray = callResult.result
+		
+		for each formInstancePointer in callResult.result
+
+				dim postdata as c 
+				dim url as c = "/DeleteFormInstance/" + formInstancePointer.forminstanceid
+				dim pr as p
+				pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+				if pr.error = .t. then
+					error_generate("Form instance delete error." + pr.errorText) 
+				end if 
+		next
+		
+
+		dim postdata as c 
+		dim url as c = "/DeleteFormDefinition/" + self._formID
+		dim pr as p
+		pr = a5dialogHelper_transformAPIQuery(url,postdata,self._apikey)
+		if pr.error = .t. then
+			error_generate(pr.errorText)
+		end if 
+	
+		ret.result = "Success"
+		
+		formDefinitionAndInstancesDelete = ret
+	
+	end
+	
+	error_handler_formDefinitionAndInstancesDelete:
+	
+	    err = error_code_get()
+	    msg = error_text_get(err)
+	    ret.error = .T.
+	    ret.errorText = msg
+		
+		formDefinitionAndInstancesDelete = ret   
+	
+		
+	END FUNCTION
+			
 end class       	
 
 
