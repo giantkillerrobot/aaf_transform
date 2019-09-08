@@ -3,17 +3,19 @@
 '--
 
 DELETE myTransForm
-DIM myTransForm as aaf::transform2
+DIM myTransForm as aaf::transform
 
-controlIndex = myTransForm.addControl("2000","greygreen")
-controlIndex = myTransForm.addControl("2001","greengrey")
+controlIndex = myTransForm.addControlHeading("Heading 1")
+controlIndex = myTransForm.addControlHeading("Heading 2","root","test")
+controlIndex = myTransForm.addControlInstructions("Here is some html")
+controlIndex = myTransForm.addControlInteger("integer123","Integer Control","100",.T.)
 
 '-- Add a page
-pageIndex = myTransForm.addPage("firstpage","yellow")
+'pageIndex = myTransForm.addPage("firstpage","yellow")
 '-- Add controls
-controlIndex = myTransForm.addControl("999","grey","firstpage")
-controlIndex = myTransForm.addControl("888","taupe","firstpage")
-controlIndex = myTransForm.addControl("777","orange","firstpage")
+'controlIndex = myTransForm.addControl("999","grey","firstpage")
+'controlIndex = myTransForm.addControl("888","taupe","firstpage")
+'controlIndex = myTransForm.addControl("777","orange","firstpage")
 
 DIM callResult as P
 DIM callResult.error as L

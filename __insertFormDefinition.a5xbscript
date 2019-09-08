@@ -3,7 +3,7 @@ DIM callResult.error as L
 DIM callResult.errorText as C
 DIM callResult.result as C   
 
-DIM myTransForm as aaf::transformClass
+DIM myTransForm as aaf::transform
 myTransForm.apikey = "70c1f472d3b842839d205a920e3cec1a_ALL"
 myTransForm._formid = "FLPOC1223"
 myTransForm._formname = "FLPOC123"

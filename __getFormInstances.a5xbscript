@@ -1,4 +1,4 @@
-DIM myTransForm as aaf::transformClass
+DIM myTransForm as aaf::transform
 myTransForm.apikey = "70c1f472d3b842839d205a920e3cec1a_ALL"
 
 DIM callResult as P

@@ -2,13 +2,21 @@
 'To encrypt the file, set the comment on the first line to: 'ENCRYPTED
 'To password protect the file (which will also encrypt it), set the comment on the first line to: 'PASSWORD:your_password_phrase
 
-define class aaf::transformClass
+define class aaf::transform
 
 'You can specify your own namespace for your classes.
 'The namespaces can be any name you want. 
 'Namespaces are useful to group similar classes together.
 'To dim an object of this class use this syntax: dim pMyinstance as mynamespace::mySampleClass
 
+'TODO:  Add "errorLog".  Trap the errors and put them in a central place in the class
+'TODO:  Add "log".  Log every step and put into a class for reading.
+
+
+	'--
+	'-- Old Definitions
+	'--
+	
 	DIM _apikey as C
 	
 	DIM _formID as C = ""
@@ -29,6 +37,588 @@ define class aaf::transformClass
 	DIM PRIVATE _cmdsPointer as P
 	DIM PRIVATE _formPointer as P
 
+	'--
+	'-- New Code
+	'--
+	
+	'--
+	'-- The following code manages the structure of the form.
+	'--
+	
+	DIM _formDefinition as P
+	DIM _formDefinition.pages[0] as P
+	
+
+	FUNCTION transform()
+		Initialize()
+	END FUNCTION
+ 
+	FUNCTION protected Initialize as V()
+		'--test = self._formDefinition.pages.size()
+		'-- Create Default Page - Will auto generate in the future.
+		pageIndex = addPage("root","null")
+	END FUNCTION
+             
+	function addPage as N(keyValue as C, color as C)
+		pageIndex = self._formDefinition.pages.append()
+		self._formDefinition.pages[pageIndex].keyValue = keyValue
+		self._formDefinition.pages[pageIndex].color = color
+		addPage = pageIndex
+		
+		'-- Add the controls for the page
+		DIM self._formDefinition.pages[pageIndex].controls[0] as P
+	end function
+
+
+'--
+'-- Add Control Section
+'-- The following code with add controls to the page structure.
+'--
+
+	function addControlHeading as N(headingText as C,pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "heading"
+		self._formDefinition.pages[pageid].controls[controlIndex].text = headingText
+		
+		addControlHeading = controlIndex
+	
+	end function
+	
+	function addControlInstructions as N(instructionsHTML as C,pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "instructions"
+		self._formDefinition.pages[pageid].controls[controlIndex].text = instructionsHTML
+		
+		addControlInstructions = controlIndex
+	
+	end function
+
+'--groupPath as C, text as C, previewValue as C, required as L
+
+	function addControlInteger as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "integer"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlInteger = controlIndex
+	
+	end function
+
+	function addControlStopWatch as N(fieldName as C, fieldLabel as C, previewValue as C, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "stopwatch"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+			
+		addControlStopWatch = controlIndex
+	
+	end function
+
+	function addControlSignature as N(fieldName as C, fieldLabel as C, previewValue as C, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "signature"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+			
+		addControlSignature = controlIndex
+	
+	end function
+
+	function addControlPhone as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "phone"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlPhone = controlIndex
+	
+	end function
+				
+	function addControlNumber as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "number"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlNumber = controlIndex
+	
+	end function
+	
+	function addControlNumberSigned as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "signed"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlNumberSigned = controlIndex
+	
+	end function
+
+	function addControlScanner as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "scanner"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlScanner = controlIndex
+	
+	end function
+
+	function addControlLocation as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "scanner"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlScanner = controlIndex
+	
+	end function
+	
+	function addControlCurrency as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "currency"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlCurrency = controlIndex
+	
+	end function
+			
+	function addControlDate as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "date"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlDate = controlIndex
+	
+	end function
+
+	function addControlDateTime as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "datetime"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlDateTime = controlIndex
+	
+	end function
+
+	function addControlText as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "text"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlText = controlIndex
+	
+	end function
+
+	function addControlYesNo as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "buttonlist"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+			
+		addControlYesNo = controlIndex
+	
+	end function
+
+	function addControlButtonList as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, listContent as C, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "buttonlist"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+		self._formDefinition.pages[pageid].controls[controlIndex].listcontent = listContent		
+			
+		addControlButtonList = controlIndex
+	
+	end function
+									
+
+	function addControlList as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, listcontent as C, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "list"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+		self._formDefinition.pages[pageid].controls[controlIndex].required = required
+		self._formDefinition.pages[pageid].controls[controlIndex].listcontent = listContent		
+			
+		addControlList = controlIndex
+	
+	end function
+	
+	function addControlPhoto as N(fieldName as C, fieldLabel as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "photo"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
+			
+		addControlPhoto = controlIndex
+	
+	end function
+
+	function addControlPhoto as N(fieldName as C, fieldLabel as C, required as L, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "photo"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldName = fieldName
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+			
+		addControlPhoto = controlIndex
+	
+	end function
+
+	function addControlChangeStatus as N(fieldLabel as C, target as C, pageKeyValue = "root", id = "")
+
+		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
+
+		'-- Make sure that the page exists before adding the control.
+		if pageid = 0 then
+			error_generate("Page not found")
+		end if
+		
+		controlIndex = self._formDefinition.pages[pageid].controls.append()
+		if id = "" then 
+			id = api_uuidcreate()
+		end if
+			
+		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
+		self._formDefinition.pages[pageid].controls[controlIndex].type = "changeStatus"
+		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
+		self._formDefinition.pages[pageid].controls[controlIndex].target = target
+
+			
+		addControlPhoto = controlIndex
+	
+	end function
+			
+
+	function processForm as P()
+		
+		DIM ret as P
+		DIM ret.error as L = .F.
+		DIM ret.errorText as C = ""
+		DIM ret.result as C
+		
+		'--
+		'-- Use a switch command to translate from structure test to other format.
+		'--
+		
+		
+		'-- Perform Process Checks
+		
+		'-- Create new pointer to hold definition
+		
+		'-- Generate Header Pointer
+		
+		'-- Process CMDS
+		
+
+		
+		ret.result = json_generate(self._formDefinition)
+'		for each page in self._formDefinition.pages
+'			
+'			for each control in page.controls
+'				
+'				
+'			next
+'			
+'		next 
+		
+		'-- Now convert to JSON
+		
+				
+		
+		processForm = ret
+		
+	end function
+	
+	
+
+	'--
+	'-- OLD CODE
+	'--
+	
+	'-- The focus of this code will be to generate the transform json
+	'-- It will also do other utility functions
+	'--
+	
 
 	function apikey.get as C ()
         apikey.get = _apikey
