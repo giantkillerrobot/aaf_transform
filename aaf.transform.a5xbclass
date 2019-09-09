@@ -593,7 +593,9 @@ define class aaf::transform
 		DIM ret.error as L = .F.
 		DIM ret.errorText as C = ""
 		DIM ret.result as C
-		
+	
+		DIM index as N			
+	
 		'--
 		'-- Use a switch command to translate from structure test to other format.
 		'--
@@ -607,21 +609,37 @@ define class aaf::transform
 		
 		'-- Process CMDS
 		
-
 		
-		ret.result = json_generate(self._formDefinition)
-'		for each page in self._formDefinition.pages
-'			
-'			for each control in page.controls
-'				
-'				
-'			next
-'			
-'		next 
+		for each page in self._formDefinition.pages
+			
+			if page.keyValue = "root" then
+				
+				'-- Don't create page items
+				for each control in page.controls
+					
+					if control.type = "heading" then
+'//Bookmark1
+					'-- Insert your code here.
+									index = self._cmdsPointerArray.append()
+					self._cmdsPointerArray[index].cmd = "heading"
+					self._cmdsPointerArray[index].type = "group"
+					self._cmdsPointerArray[index].text = headingText '---"FLPOC11" 			
+						
+					end if
+					
+				next	
+						
+			end if
+			
+
+			
+		next  '-- For each page
 		
 		'-- Now convert to JSON
 		
-				
+		
+		ret.result = json_generate(self._formDefinition)
+		
 		
 		processForm = ret
 		
