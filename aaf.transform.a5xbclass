@@ -30,17 +30,12 @@ define class aaf::transform
 	DIM _headingtemplate as C = ""
 	DIM _listingtemplate as C = ""
 	DIM _printingtemplate as C = ""
+	DIM _metadata as C = ""
 	DIM _settings as C = ""
+	DIM _initialstatusID as C = ""
+	DIM _statusrolegroupID as C = ""	
 	DIM _formDataJSON as C = "{}"
-		
-	DIM PRIVATE _cmdsPointerArray[0] as P
-	DIM PRIVATE _cmdsPointer as P
-	DIM PRIVATE _formPointer as P
-
-	'--
-	'-- New Code
-	'--
-	
+			
 	'--
 	'-- The following code manages the structure of the form.
 	'--
@@ -56,7 +51,7 @@ define class aaf::transform
 	FUNCTION protected Initialize as V()
 		'--test = self._formDefinition.pages.size()
 		'-- Create Default Page - Will auto generate in the future.
-		pageIndex = addPage("root","null")
+		pageIndex = addPage("root","null","null")
 	END FUNCTION
  
 	function apikey.get as C ()
@@ -67,18 +62,33 @@ define class aaf::transform
         _apikey = value
     end function 
                 
-             
+        
 '--
 '-- Page Management
 '-- The following code are the page structure functions.
 '--
           
-	function addPage as N(keyValue as C, color as C)
+	function addPage as N(keyValue as C, text as C, color as C)
 		pageIndex = self._formDefinition.pages.append()
 		self._formDefinition.pages[pageIndex].keyValue = keyValue
 		self._formDefinition.pages[pageIndex].color = color
+		self._formDefinition.pages[pageIndex].text = text		
 		addPage = pageIndex
 		
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "pageStart"
+		cmdPointer.text = text
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageIndex].cmdJSONStart = cmdJSON	
+		self._formDefinition.pages[pageIndex].cmdJSONEnd = <<%json%
+{
+      "cmd": "pageEnd"
+   }
+%json%
+			
 		'-- Add the controls for the page
 		DIM self._formDefinition.pages[pageIndex].controls[0] as P
 		
@@ -108,6 +118,16 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].type = "heading"
 		self._formDefinition.pages[pageid].controls[controlIndex].text = headingText
 		
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "heading"
+		cmdPointer.type = "group"
+		cmdPointer.text = headingText
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+		
 		addControlHeading = controlIndex
 	
 	end function
@@ -129,7 +149,15 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].id  = id
 		self._formDefinition.pages[pageid].controls[controlIndex].type = "instructions"
 		self._formDefinition.pages[pageid].controls[controlIndex].text = instructionsHTML
+
+		DIM cmdPointer as P
+		cmdPointer.cmd = "heading"
+		cmdPointer.text = instructionsHTML
+		cmdPointer.type = "instructions"
+		cmdJSON = json_generate(cmdPointer)
 		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+				
 		addControlInstructions = controlIndex
 	
 	end function
@@ -156,7 +184,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "integer"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlInteger = controlIndex
 	
 	end function
@@ -229,7 +274,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "phone"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlPhone = controlIndex
 	
 	end function
@@ -254,7 +316,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "number"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+				
 		addControlNumber = controlIndex
 	
 	end function
@@ -279,7 +358,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "signed"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlNumberSigned = controlIndex
 	
 	end function
@@ -304,7 +400,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "scanner"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlScanner = controlIndex
 	
 	end function
@@ -329,7 +442,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "location"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlScanner = controlIndex
 	
 	end function
@@ -354,7 +484,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "currency"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlCurrency = controlIndex
 	
 	end function
@@ -379,7 +526,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "date"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON	
+					
 		addControlDate = controlIndex
 	
 	end function
@@ -404,7 +568,24 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "datetime"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON	
+					
 		addControlDateTime = controlIndex
 	
 	end function
@@ -429,13 +610,32 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "text"
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON	
+					
 		addControlText = controlIndex
 	
 	end function
 
 	function addControlYesNo as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, pageKeyValue = "root", id = "")
 
+		DIM delimiterPosition as N
+
 		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
 
 		'-- Make sure that the page exists before adding the control.
@@ -454,13 +654,45 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-			
+      
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "buttonlist"
+		
+		'-- Now add the list with Yes/No
+	
+		DIM listItems[0] as P
+		listIndex = listItems.append()
+		listItems[listIndex].text = "Yes"
+		listItems[listIndex].value = "Y"
+		listIndex = listItems.append()
+		listItems[listIndex].text = "No"
+		listItems[listIndex].value = "N"
+		
+		cmdPointer.list = listItems
+		
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON		
+					
 		addControlYesNo = controlIndex
 	
 	end function
 
 	function addControlButtonList as N(fieldName as C, fieldLabel as C, previewValue as C, required as L, listContent as C, pageKeyValue = "root", id = "")
 
+		DIM listItems[0] as P
+		
 		pageid = _formDefinition.pages.findI(pageKeyValue,"keyValue")
 
 		'-- Make sure that the page exists before adding the control.
@@ -479,8 +711,37 @@ define class aaf::transform
 		self._formDefinition.pages[pageid].controls[controlIndex].fieldLabel = fieldLabel
 		self._formDefinition.pages[pageid].controls[controlIndex].previewValue = previewValue
 		self._formDefinition.pages[pageid].controls[controlIndex].required = required
-		self._formDefinition.pages[pageid].controls[controlIndex].listcontent = listContent		
-			
+		
+		for each item in listContent
+			'-- Split the row
+			str_crlf = strtran(item.value,"|",crlf())
+			delete a
+			dim a[0] as C
+			a.initialize(str_crlf)	
+			listIndex = listItems.append()
+			listItems[listIndex].text = a[1]
+			listItems[listIndex].value = a[2]			
+		next
+
+		'-- Now added the cmd JSON
+		DIM cmdPointer as P
+		cmdPointer.cmd = "field"
+		cmdPointer.groupPath = fieldName
+		cmdPointer.text = fieldLabel
+		cmdPointer.previewValue = previewValue
+		if required then
+				cmdPointer.required = "Y"
+			else
+				cmdPointer.required = "N"
+		end if
+		cmdPointer.type = "buttonlist"
+		
+		cmdPointer.list = listItems
+
+		cmdJSON = json_generate(cmdPointer)
+		
+		self._formDefinition.pages[pageid].controls[controlIndex].cmdJSON = cmdJSON	
+				
 		addControlButtonList = controlIndex
 	
 	end function
@@ -587,13 +848,18 @@ define class aaf::transform
 '-- The following function processes the page structure and generates the TransForm JSON
 '--
 
-	function processForm as P()
-		
+	function formDefinitionGenerate as P()
+
+	on error goto error_handler_formDefinitionGenerate
+
 		DIM ret as P
 		DIM ret.error as L = .F.
 		DIM ret.errorText as C = ""
 		DIM ret.result as C
 	
+				
+		DIM formPointer as P
+		
 		DIM index as N			
 	
 		'--
@@ -609,42 +875,96 @@ define class aaf::transform
 		
 		'-- Process CMDS
 		
-		
+		DIM cmdsJSON as C = ""
+				
 		for each page in self._formDefinition.pages
 			
-			if page.keyValue = "root" then
-				
-				'-- Don't create page items
-				for each control in page.controls
-					
-					if control.type = "heading" then
-'//Bookmark1
-					'-- Insert your code here.
-									index = self._cmdsPointerArray.append()
-					self._cmdsPointerArray[index].cmd = "heading"
-					self._cmdsPointerArray[index].type = "group"
-					self._cmdsPointerArray[index].text = headingText '---"FLPOC11" 			
-						
-					end if
-					
-				next	
-						
+			if page.keyValue <> "root" then
+				cmdsJSON = cmdsJSON + page.cmdJSONStart + ","
 			end if
-			
+				
+			'-- Don't create page items
+			for each control in page.controls
+				cmdsJSON = cmdsJSON + control.cmdJSON + ","
+			next	
 
-			
+			if page.keyValue <> "root" then
+				cmdsJSON = cmdsJSON + page.cmdJSONEnd + ","
+			end if
+												
 		next  '-- For each page
 		
 		'-- Now convert to JSON
 		
+		cmdsJSON = rtrim(cmdsJSON,",")
+		cmdsJSON = "[" + cmdsJSON + "]"
+
+		ret.result = cmdsJSON
+		'--ret.result = json_generate(self._formDefinition)
 		
-		ret.result = json_generate(self._formDefinition)
+		DIM formDefinitionTemplate as c = <<%json%
+{
+   "formid": "{{formid}}",
+   "formname": "{{formname}}",
+   "formversion": "{{formversion}}",
+   "color": "{{color}}",
+   "textcolor": "{{textcolor}}",
+   "icon": "{{icon}}",
+   "initialization": "{{initialization}}",
+   "previewdata": "{{previewdata}}",
+   "headingtemplate": "{{headingtemplate}}",
+   "listingtemplate": "{{listingtemplate}}",
+   "printingtemplate": "{{printingtemplate}}",
+   "metadata": "{{metadata}}",
+   "settings": "{{settings}}",
+   "initialstatusID": "{{initialstatusID}}",
+   "statusrolegroupID": "{{statusrolegroupID}}",
+   "cmds": {{cmdsJSON}}
+}
+%json%
+   
+   		
+   		'-- Merge the class data into the form definition template.
+   		
+		formDefinition = strtran(formDefinitionTemplate,"{{cmdsJSON}}",cmdsJSON)
+		formDefinition = strtran(formDefinition,"{{formid}}",self._formid)
+		formDefinition = strtran(formDefinition,"{{formname}}",self._formname)
+		formDefinition = strtran(formDefinition,"{{formversion}}",self._formversion)
+		formDefinition = strtran(formDefinition,"{{color}}",_color)
+		formDefinition = strtran(formDefinition,"{{textcolor}}",self._textcolor)
+		formDefinition = strtran(formDefinition,"{{icon}}",self._icon)
+		formDefinition = strtran(formDefinition,"{{initialization}}",self._initialization)
+		formDefinition = strtran(formDefinition,"{{previewdata}}",self._previewdata)
+		formDefinition = strtran(formDefinition,"{{headingtemplate}}",self._headingtemplate)
+		formDefinition = strtran(formDefinition,"{{listingtemplate}}",self._listingtemplate)
+		formDefinition = strtran(formDefinition,"{{printingtemplate}}",self._printingtemplate)
+		formDefinition = strtran(formDefinition,"{{metadata}}",self._metadata)
+		formDefinition = strtran(formDefinition,"{{settings}}",self._settings)
+		formDefinition = strtran(formDefinition,"{{initialstatusID}}",self._initialstatusID)
+		formDefinition = strtran(formDefinition,"{{statusrolegroupID}}",self._statusrolegroupID)
 		
+		debug(1)
 		
-		processForm = ret
+		ret.result = formDefinition
+								
+		formDefinitionGenerate = ret
+
+		end
 		
+		error_handler_formDefinitionGenerate:
+		
+		    err = error_code_get()
+		    msg = error_text_get(err)
+		 	script = error_script_get()
+		 	lineNumber = error_line_number_get()
+		 	
+		 	ret.error = .T.
+		 	ret.errorText = "Error: " + script + ":" + lineNumber + ": " + msg
+		 	trace.WriteLn("Error: " + script + ":" + lineNumber + ": " + msg)
+		 	
+			formDefinitionGenerate = ret		 	
+		 			
 	end function
-	
 	
 
 	'--
@@ -654,611 +974,6 @@ define class aaf::transform
 	'-- The focus of this code will be to generate the transform json
 	'-- It will also do other utility functions
 	'--
-	
-
-    
-
-	
-	FUNCTION addCmdsHeading as P(headingText as C)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsHeading
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		DIM index as N
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "heading"
-		self._cmdsPointerArray[index].type = "group"
-		self._cmdsPointerArray[index].text = headingText '---"FLPOC11" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsHeading = ret
-	
-	end
-	
-	error_handler_addCmdsHeading:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsHeading = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsPageStart as P(text as C)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsPageStart
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		DIM index as N
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "pageStart"
-		self._cmdsPointerArray[index].text = text '---"FLPOC11" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsPageStart = ret
-	
-	end
-	
-	error_handler_addCmdsPageStart:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsPageStart = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsPageEnd as P()
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsPageEnd
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		DIM index as N
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "pageEnd"
-		
-		ret.result = "Success"
-		
-		addCmdsPageEnd = ret
-	
-	end
-	
-	error_handler_addCmdsPageEnd:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsPageEnd = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsInstructions as P(text as C)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsInstructions
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		DIM index as N
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "heading"
-		self._cmdsPointerArray[index].text = text		
-		self._cmdsPointerArray[index].type = "instructions"
-
-		ret.result = "Success"
-		
-		addCmdsInstructions = ret
-	
-	end
-	
-	error_handler_addCmdsInstructions:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsInstructions = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsChangeStatus as P(target as C, text as C)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsChangeStatus
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		DIM index as N
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "changeStatus"
-		self._cmdsPointerArray[index].text = text		
-		self._cmdsPointerArray[index].target = target
-
-		ret.result = "Success"
-		
-		addCmdsChangeStatus = ret
-	
-	end
-	
-	error_handler_addCmdsChangeStatus:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsChangeStatus = ret   
-	
-		
-	END FUNCTION
-	
-	
-	FUNCTION addCmdsNumber as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsNumber
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-   
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "number" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsNumber = ret
-	
-	end
-	
-	error_handler_addCmdsNumber:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsNumber = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsDate as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsDate
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-   
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "date" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsDate = ret
-	
-	end
-	
-	error_handler_addCmdsDate:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsDate = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsDateTime as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsDateTime
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-   
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "datetime" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsDateTime = ret
-	
-	end
-	
-	error_handler_addCmdsDateTime:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsDateTime = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsText as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsText
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-   
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "text" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsText = ret
-	
-	end
-	
-	error_handler_addCmdsText:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsText = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsYesNo as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsYesNo
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
- 
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-
-		
-		self._cmdsPointerArray[index].type = "buttonlist" 
-		
-		'-- Now add the list with Yes/No
-
-		DIM self._cmdsPointerArray[index].list[0] as P
-		listIndex = self._cmdsPointerArray[index].list.append()
-		self._cmdsPointerArray[index].list[listIndex].text = "Yes"
-		self._cmdsPointerArray[index].list[listIndex].value = "Yes"
-		listIndex = self._cmdsPointerArray[index].list.append()
-		self._cmdsPointerArray[index].list[listIndex].text = "No"
-		self._cmdsPointerArray[index].list[listIndex].value = "No"
-		
-		ret.result = "Success"
-		
-		addCmdsYesNo = ret
-	
-	end
-	
-	error_handler_addCmdsYesNo:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsYesNo = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsList as P(groupPath as C, text as C, previewValue as C, required as L, listContent as C)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsList
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-
-		
-		self._cmdsPointerArray[index].type = "list" 
-		
-		'-- Now iterate through the comma delimited list
-		
-		listContentList = comma_to_crlf(listContent)
-
-		DIM self._cmdsPointerArray[index].list[0] as P
-				
-		for each item in listContentList
-			listIndex = self._cmdsPointerArray[index].list.append()
-			self._cmdsPointerArray[index].list[listIndex].text = item.value
-			self._cmdsPointerArray[index].list[listIndex].value = item.value			
-		next
-		
-		
-		ret.result = "Success"
-		
-		addCmdsList = ret
-	
-	end
-	
-	error_handler_addCmdsList:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsList = ret   
-	
-		
-	END FUNCTION
-				
-	FUNCTION addCmdsInteger as P(groupPath as C, text as C, previewValue as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsInteger
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "integer" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsInteger = ret
-	
-	end
-	
-	error_handler_addCmdsInteger:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsInteger = ret   
-	
-		
-	END FUNCTION
-
-	FUNCTION addCmdsPhoto as P(groupPath as C, text as C, required as L)
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_addCmdsPhoto
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		'-- Insert your code here.
-		index = self._cmdsPointerArray.append()
-		self._cmdsPointerArray[index].cmd = "field"
-		self._cmdsPointerArray[index].groupPath = groupPath '--"leakrate"
-		self._cmdsPointerArray[index].text = text '--"Leakrate at Start (x10-10)" 
-		'--self._cmdsPointerArray[index].previewValue = previewValue '--"15" 
-		if required then
-			self._cmdsPointerArray[index].required = "Y" 
-		else
-			self._cmdsPointerArray[index].required = "N" 		
-		end if
-		
-		self._cmdsPointerArray[index].type = "photo" 
-
-		
-		ret.result = "Success"
-		
-		addCmdsPhoto = ret
-	
-	end
-	
-	error_handler_addCmdsPhoto:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		addCmdsPhoto = ret   
-	
-		
-	END FUNCTION
-		
-	FUNCTION returnCMDSJson as P()
-	
-	'-- This is a placeholder for future functions.
-	'-- Makes it easy to copy/paste/update to add new functionality.
-	
-	on error goto error_handler_returnCMDSJson
-	
-		DIM ret as P
-		DIM ret.error as L
-		DIM ret.errorText as C
-		DIM ret.result as C   
-	
-		ret.result = json_generate(self._cmdsPointerArray,.t.)
-		
-		returnCMDSJson = ret
-	
-	end
-	
-	error_handler_returnCMDSJson:
-	
-	    err = error_code_get()
-	    msg = error_text_get(err)
-	    ret.error = .T.
-	    ret.errorText = msg
-		
-		returnCMDSJson = ret   
-	
-		
-	END FUNCTION
 
 	FUNCTION generateFormJSON as P()
 	

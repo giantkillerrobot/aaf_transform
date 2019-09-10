@@ -1,28 +1,58 @@
 '--
-'-- New class test
+'-- Test Script - TransForm Class
 '--
-
-DELETE myTransForm
-DIM myTransForm as aaf::transform
-
-controlIndex = myTransForm.addControlHeading("Heading 1")
-controlIndex = myTransForm.addControlHeading("Heading 2","root","test")
-controlIndex = myTransForm.addControlInstructions("Here is some html")
-controlIndex = myTransForm.addControlInteger("integer123","Integer Control","100",.T.)
-
-'-- Add a page
-'pageIndex = myTransForm.addPage("firstpage","yellow")
-'-- Add controls
-'controlIndex = myTransForm.addControl("999","grey","firstpage")
-'controlIndex = myTransForm.addControl("888","taupe","firstpage")
-'controlIndex = myTransForm.addControl("777","orange","firstpage")
+'-- Copyright (c) 2018-19 GiantKillerRobot
+'--
 
 DIM callResult as P
 DIM callResult.error as L
 DIM callResult.errorText as C
 DIM callResult.result as C   
 
-callResult = myTransForm.processForm()
+DELETE myTransForm
+DIM myTransForm as aaf::transform
+
+'-- Set up the form information
+
+myTransForm._formid = "aaaa"
+myTransForm._formname = "aaaa Test"
+myTransForm._formversion = "0.1"
+myTransForm._color = ""
+myTransForm._textcolor = ""
+myTransForm._icon = ""
+myTransForm._initialization = ""
+myTransForm._previewdata = ""
+myTransForm._headingtemplate = ""
+myTransForm._listingtemplate = ""
+myTransForm._printingtemplate = ""
+myTransForm._settings = ""
+		
+'-- Add the base controls
+controlIndex = myTransForm.addControlHeading("Heading 1")
+controlIndex = myTransForm.addControlHeading("Heading 2","root","test")
+controlIndex = myTransForm.addControlInstructions("Here is some html")
+controlIndex = myTransForm.addControlInteger("integer123","Integer Control","100",.T.)
+
+'-- Add a page for controls
+pageIndex = myTransForm.addPage("firstpage","First Page","yellow")
+'-- Add controls to that page
+controlIndex = myTransForm.addControlHeading("P1-Heading 1","firstpage")
+controlIndex = myTransForm.addControlHeading("P2-Heading 2","firstpage")
+controlIndex = myTransForm.addControlYesNo("YesNo Test","Yes No Test","Yes",.T.)
+
+DIM myList as C = <<%str%
+First|1
+Second|2
+Third|3
+%str%
+controlIndex = myTransForm.addControlButtonList("ButtonListTest","ButtonListTest","2",.T.,myList,"firstpage")
+
+
+
+
+'-- Generate the form definition
+
+callResult = myTransForm.formDefinitionGenerate()
 
 if callResult.error then
 		msgbox(callResult.errorText)
