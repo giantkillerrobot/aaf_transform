@@ -919,7 +919,7 @@ define class aaf::transform
    "settings": "{{settings}}",
    "initialstatusID": "{{initialstatusID}}",
    "statusrolegroupID": "{{statusrolegroupID}}",
-   "cmds": {{cmdsJSON}}
+   "formDefinitionJSON": {{cmdsJSON}}
 }
 %json%
    
@@ -942,8 +942,6 @@ define class aaf::transform
 		formDefinition = strtran(formDefinition,"{{settings}}",self._settings)
 		formDefinition = strtran(formDefinition,"{{initialstatusID}}",self._initialstatusID)
 		formDefinition = strtran(formDefinition,"{{statusrolegroupID}}",self._statusrolegroupID)
-		
-		debug(1)
 		
 		ret.result = formDefinition
 								
@@ -1039,12 +1037,12 @@ define class aaf::transform
 	END FUNCTION
 
 	
-	FUNCTION insertFormDefinition as P()
+	FUNCTION formDefinitionInsert as P(deleteExistingDefination = .T.)
 	
 	'-- This is a placeholder for future functions.
 	'-- Makes it easy to copy/paste/update to add new functionality.
 	
-	on error goto error_handler_insertFormDefinition
+	on error goto error_handler_formDefinitionInsert
 	
 		DIM ret as P
 		DIM ret.error as L
@@ -1056,15 +1054,21 @@ define class aaf::transform
 		DIM callResult.errorText as C
 		DIM callResult.result as C   
 		
-		callResult = self.generateFormJSON()
+		callResult = self.formDefinitionGenerate()
+		formDefinition = callResult.result
 	
 		if callResult.Error then
 				error_generate(callResult.errorText)
 			else
+				'-- Delete if necessary
+				if deleteExistingDefination then
+					callResult = formDefinitionDelete()
+				end if
+			
 				'-- Insert your code here.
 				dim url as c = "/CreateNewFormDefinition"
 				dim pr as p
-				pr = a5dialogHelper_transformAPIQuery(url,callResult.result,self._apikey)
+				pr = a5dialogHelper_transformAPIQuery(url,formDefinition,self._apikey)
 				if pr.error = .f. then
 					dim result as c 
 					result = pr.result
@@ -1079,18 +1083,18 @@ define class aaf::transform
 		
 		ret.result = "Success"
 		
-		insertFormDefinition = ret
+		formDefinitionInsert = ret
 	
 	end
 	
-	error_handler_insertFormDefinition:
+	error_handler_formDefinitionInsert:
 	
 	    err = error_code_get()
 	    msg = error_text_get(err)
 	    ret.error = .T.
 	    ret.errorText = msg
 		
-		insertFormDefinition = ret   
+		formDefinitionInsert = ret   
 	
 		
 	END FUNCTION	
@@ -1548,9 +1552,6 @@ outputPointerArray[index].{{columnName}} = item.formdata.{{columnName}}
 		DIM ret.error as L
 		DIM ret.errorText as C
 		DIM ret.result as C   
-
-
-
 
 		dim postdata as c 
 		dim url as c = "/DeleteFormDefinition/" + self._formID

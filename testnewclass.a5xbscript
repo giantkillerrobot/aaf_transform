@@ -12,10 +12,12 @@ DIM callResult.result as C
 DELETE myTransForm
 DIM myTransForm as aaf::transform
 
+myTransForm._apikey = "70c1f472d3b842839d205a920e3cec1a_ALL"
+
 '-- Set up the form information
 
-myTransForm._formid = "aaaa"
-myTransForm._formname = "aaaa Test"
+myTransForm._formid = "aaaaaa"
+myTransForm._formname = "aaaaaa Test"
 myTransForm._formversion = "0.1"
 myTransForm._color = ""
 myTransForm._textcolor = ""
@@ -51,8 +53,8 @@ controlIndex = myTransForm.addControlButtonList("ButtonListTest","ButtonListTest
 
 
 '-- Generate the form definition
-
-callResult = myTransForm.formDefinitionGenerate()
+callResult = myTransForm.formDefinitionInsert()
+'--callResult = myTransForm.formDefinitionGenerate()
 
 if callResult.error then
 		msgbox(callResult.errorText)
